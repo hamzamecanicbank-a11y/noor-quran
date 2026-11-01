@@ -2,9 +2,16 @@
 // api.islamic.app — a free, keyless, CORS-enabled mirror of the Quran.com
 // v4 corpus. Swap BASE to another v4-compatible host if you ever need to.
 
+import { DEFAULT_RECITER } from "@/data/reciters";
+
 export const BASE = "https://api.islamic.app/v1";
-export const AUDIO_CDN = "https://cdn.islamic.app/quran/audio";
-export const DEFAULT_RECITER = "ar.alafasy";
+// Two CDNs carry the same ayah-by-ayah recordings under the same slugs.
+// The player tries them in order, so a missing file on one is covered by the other.
+export const AUDIO_CDNS = [
+  (reciter: string, n: number) => `https://cdn.islamic.app/quran/audio/${reciter}/${n}.mp3`,
+  (reciter: string, n: number) =>
+    `https://cdn.islamic.network/quran/audio/128/${reciter}/${n}.mp3`,
+];
 
 export type Word = {
   position: number;
@@ -59,8 +66,9 @@ export async function fetchSurahVerses(
   return Array.isArray(data) ? data : data.verses;
 }
 
-export function ayahAudioUrl(globalAyah: number, reciter = DEFAULT_RECITER) {
-  return `${AUDIO_CDN}/${reciter}/${globalAyah}.mp3`;
+/** All candidate URLs for one ayah, in the order to try them. */
+export function ayahAudioUrls(globalAyah: number, reciter = DEFAULT_RECITER): string[] {
+  return AUDIO_CDNS.map((f) => f(reciter, globalAyah));
 }
 
 /** Strip the HTML footnote markup some translations carry. */

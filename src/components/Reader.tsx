@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ayahAudioUrl,
+  ayahAudioUrls,
   cleanTranslation,
   fetchSurahVerses,
   type Verse,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import { useSettings } from "@/lib/language";
 import { getSurah, type Surah } from "@/data/surahs";
+import { RECITERS } from "@/data/reciters";
 import {
   AYAH_LESSONS,
   SURAH_INTROS,
@@ -23,15 +24,18 @@ type Selected = { key: string; position: number } | null;
 
 export function Reader({ surahNumber }: { surahNumber: number }) {
   const surah = getSurah(surahNumber)!;
-  const { lang, kids, tr } = useSettings();
+  const { lang, kids, tr, reciter } = useSettings();
 
   const [verses, setVerses] = useState<Verse[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Selected>(null);
   const [playing, setPlaying] = useState<number | null>(null); // index into verses
   const [continuous, setContinuous] = useState(false);
+  const [audioError, setAudioError] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordAudioRef = useRef<HTMLAudioElement | null>(null);
+  // Remaining candidate URLs for the ayah currently playing.
+  const candidatesRef = useRef<string[]>([]);
 
   const [attempt, setAttempt] = useState(0);
 
@@ -58,8 +62,21 @@ export function Reader({ surahNumber }: { surahNumber: number }) {
   // ---- ayah audio ----
   const stop = useCallback(() => {
     audioRef.current?.pause();
+    candidatesRef.current = [];
     setPlaying(null);
     setContinuous(false);
+  }, []);
+
+  /** Load the next candidate URL into the player; returns false when none are left. */
+  const tryNextSource = useCallback(() => {
+    const el = audioRef.current;
+    const next = candidatesRef.current.shift();
+    if (!el || !next) return false;
+    el.src = next;
+    el.play().catch(() => {
+      /* handled by the error listener */
+    });
+    return true;
   }, []);
 
   const playIndex = useCallback(
@@ -68,17 +85,16 @@ export function Reader({ surahNumber }: { surahNumber: number }) {
         stop();
         return;
       }
-      const el = audioRef.current;
-      if (!el) return;
-      el.src = ayahAudioUrl(verses[i].id);
-      el.play().catch(() => stop());
+      setAudioError(false);
+      candidatesRef.current = ayahAudioUrls(verses[i].id, reciter);
+      tryNextSource();
       setPlaying(i);
       setContinuous(keepGoing);
       document
         .getElementById(`ayah-${verses[i].verse_key}`)
         ?.scrollIntoView({ block: "center", behavior: "smooth" });
     },
-    [verses, stop],
+    [verses, stop, reciter, tryNextSource],
   );
 
   useEffect(() => {
@@ -88,9 +104,19 @@ export function Reader({ surahNumber }: { surahNumber: number }) {
       if (continuous && playing !== null) playIndex(playing + 1, true);
       else setPlaying(null);
     };
+    const onError = () => {
+      if (!tryNextSource()) {
+        setAudioError(true);
+        stop();
+      }
+    };
     el.addEventListener("ended", onEnded);
-    return () => el.removeEventListener("ended", onEnded);
-  }, [continuous, playing, playIndex]);
+    el.addEventListener("error", onError);
+    return () => {
+      el.removeEventListener("ended", onEnded);
+      el.removeEventListener("error", onError);
+    };
+  }, [continuous, playing, playIndex, tryNextSource, stop]);
 
   useEffect(() => () => audioRef.current?.pause(), []);
 
@@ -113,6 +139,8 @@ export function Reader({ surahNumber }: { surahNumber: number }) {
         surah={surah}
         onPlayAll={() => (playing !== null ? stop() : playIndex(0, true))}
         isPlaying={playing !== null}
+        audioError={audioError}
+        onReciterChange={stop}
       />
 
       {intro && (
@@ -182,12 +210,16 @@ function SurahHeader({
   surah,
   onPlayAll,
   isPlaying,
+  audioError,
+  onReciterChange,
 }: {
   surah: Surah;
   onPlayAll: () => void;
   isPlaying: boolean;
+  audioError: boolean;
+  onReciterChange: () => void;
 }) {
-  const { lang, tr } = useSettings();
+  const { lang, tr, reciter, setReciter } = useSettings();
   return (
     <header className="mb-6 flex flex-col items-center gap-3 pt-8 text-center">
       <span className="medallion grid h-16 w-16 place-items-center text-xl font-extrabold">
@@ -210,7 +242,30 @@ function SurahHeader({
       >
         {isPlaying ? `■ ${tr("stop")}` : `▶ ${tr("playSurah")}`}
       </button>
-      <p className="m-0 text-xs text-ink-3">{tr("reciter")}</p>
+      <label className="flex items-center gap-2 text-sm text-ink-2">
+        <span>{tr("reciter")}</span>
+        <select
+          value={reciter}
+          onChange={(e) => {
+            onReciterChange();
+            setReciter(e.target.value);
+          }}
+          aria-label={tr("chooseReciter")}
+          className="rounded-full border border-line bg-card px-3 py-1.5 text-sm font-bold text-ink outline-none focus:border-gold"
+        >
+          {RECITERS.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.name[lang]}
+              {r.style ? ` — ${r.style[lang]}` : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+      {audioError && (
+        <p className="m-0 rounded-xl bg-gold-soft px-3 py-2 text-sm text-ink" role="alert">
+          {tr("audioUnavailable")}
+        </p>
+      )}
     </header>
   );
 }

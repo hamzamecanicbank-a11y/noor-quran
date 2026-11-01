@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { t, type Lang, type StringKey } from "./i18n";
+import { DEFAULT_RECITER, RECITERS } from "@/data/reciters";
 
 type Settings = {
   lang: Lang;
@@ -17,6 +18,8 @@ type Settings = {
   setLang: (l: Lang) => void;
   toggleLang: () => void;
   setKids: (k: boolean) => void;
+  reciter: string;
+  setReciter: (id: string) => void;
   tr: (key: StringKey) => string;
 };
 
@@ -27,6 +30,7 @@ const KEY = "noor:settings";
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en");
   const [kids, setKidsState] = useState(false);
+  const [reciter, setReciterState] = useState<string>(DEFAULT_RECITER);
 
   useEffect(() => {
     // Restore saved settings after hydration so server and client markup match.
@@ -39,9 +43,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (!raw) return;
     const id = window.setTimeout(() => {
       try {
-        const s = JSON.parse(raw!) as Partial<{ lang: Lang; kids: boolean }>;
+        const s = JSON.parse(raw!) as Partial<{ lang: Lang; kids: boolean; reciter: string }>;
         if (s.lang === "ar" || s.lang === "en") setLangState(s.lang);
         if (typeof s.kids === "boolean") setKidsState(s.kids);
+        if (s.reciter && RECITERS.some((r) => r.id === s.reciter)) setReciterState(s.reciter);
       } catch {
         /* corrupt value */
       }
@@ -53,11 +58,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
     try {
-      localStorage.setItem(KEY, JSON.stringify({ lang, kids }));
+      localStorage.setItem(KEY, JSON.stringify({ lang, kids, reciter }));
     } catch {
       /* storage unavailable */
     }
-  }, [lang, kids]);
+  }, [lang, kids, reciter]);
 
   const setLang = useCallback((l: Lang) => setLangState(l), []);
   const toggleLang = useCallback(
@@ -65,6 +70,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     [],
   );
   const setKids = useCallback((k: boolean) => setKidsState(k), []);
+  const setReciter = useCallback((id: string) => setReciterState(id), []);
 
   const value = useMemo<Settings>(
     () => ({
@@ -73,9 +79,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       setLang,
       toggleLang,
       setKids,
+      reciter,
+      setReciter,
       tr: (key) => t(lang, key),
     }),
-    [lang, kids, setLang, toggleLang, setKids],
+    [lang, kids, reciter, setLang, toggleLang, setKids, setReciter],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

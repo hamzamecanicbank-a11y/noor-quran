@@ -49,7 +49,9 @@ const strings = {
     verse: "Ayah",
     home: "Home",
     footer: "Noor is free, open source, and has no ads or tracking. Quran text, word data and recitations come from the Quran.com corpus via islamic.app.",
-    reciter: "Reciter: Mishary Rashid Alafasy",
+    reciter: "Reciter",
+    chooseReciter: "Choose a reciter",
+    audioUnavailable: "This recitation is not available for this ayah. Try another reciter.",
     basmala: "In the name of Allah, the Most Merciful, the Most Compassionate",
   },
   ar: {
@@ -99,7 +101,9 @@ const strings = {
     verse: "آية",
     home: "الرئيسية",
     footer: "نور مجاني ومفتوح المصدر، بلا إعلانات ولا تتبّع. نص القرآن وبيانات الكلمات والتلاوات من مدونة Quran.com عبر islamic.app.",
-    reciter: "القارئ: مشاري راشد العفاسي",
+    reciter: "القارئ",
+    chooseReciter: "اختر القارئ",
+    audioUnavailable: "هذه التلاوة غير متوفرة لهذه الآية. جرّب قارئاً آخر.",
     basmala: "بسم الله الرحمن الرحيم",
   },
 } as const;
