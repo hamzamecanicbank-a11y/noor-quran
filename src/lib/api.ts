@@ -63,7 +63,9 @@ export async function fetchSurahVerses(
   const data = await get<{ verses: Verse[] } | Verse[]>(
     `/verses/by_chapter/${chapter}?translations=${translation}&words=true&fields=text_uthmani`,
   );
-  return Array.isArray(data) ? data : data.verses;
+  const verses = Array.isArray(data) ? data : data.verses;
+  // Some mirrors return the global ayah number in verse_number; the key is authoritative.
+  return verses.map((v) => ({ ...v, verse_number: Number(v.verse_key.split(":")[1]) }));
 }
 
 /** All candidate URLs for one ayah, in the order to try them. */
