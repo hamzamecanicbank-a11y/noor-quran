@@ -12,6 +12,7 @@ import {
 import { useSettings } from "@/lib/language";
 import { getSurah, type Surah } from "@/data/surahs";
 import { RECITERS } from "@/data/reciters";
+import { TafsirPanel } from "@/components/TafsirPanel";
 import {
   AYAH_LESSONS,
   SURAH_INTROS,
@@ -505,20 +506,21 @@ function LessonPanel({
   lang: "en" | "ar";
   tr: AyahProps["tr"];
 }) {
-  const [tab, setTab] = useState<"lesson" | "story" | "visual">("lesson");
+  const [tab, setTab] = useState<"lesson" | "story" | "tafsir" | "visual">("lesson");
   const tabs: { id: typeof tab; label: string; show: boolean }[] = [
     { id: "lesson", label: tr("lesson"), show: true },
     { id: "story", label: tr("story"), show: !!lesson?.story },
+    { id: "tafsir", label: tr("tafsir"), show: true },
     { id: "visual", label: tr("visual"), show: true },
   ];
 
   return (
     <details className="mt-4 rounded-xl bg-paper-2" open={defaultOpen}>
       <summary className="cursor-pointer select-none px-4 py-2 text-sm font-extrabold text-teal">
-        {tr("lesson")} · {tr("visual")}
+        {tr("lesson")} · {tr("tafsir")} · {tr("visual")}
       </summary>
       <div className="px-4 pb-4">
-        <div className="mb-3 flex gap-1" role="tablist">
+        <div className="mb-3 flex flex-wrap gap-1" role="tablist">
           {tabs
             .filter((t) => t.show)
             .map((t) => (
@@ -558,6 +560,8 @@ function LessonPanel({
             <ReviewBadge status={lesson.status} tr={tr} />
           </>
         )}
+
+        {tab === "tafsir" && <TafsirPanel verseKey={verseKey} />}
 
         {tab === "visual" &&
           (lesson?.media?.image || lesson?.media?.video ? (

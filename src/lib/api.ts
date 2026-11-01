@@ -81,3 +81,38 @@ export function cleanTranslation(html: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+export type TafsirText = {
+  slug: string;
+  resource_name: string;
+  language_name: string;
+  text: string;
+};
+
+/** Fetch one tafsir for one ayah. Cached per (ayah, tafsir). */
+export async function fetchTafsir(verseKey: string, slug: string): Promise<TafsirText | null> {
+  const data = await get<{ verse: { tafsirs?: TafsirText[] } }>(
+    `/verses/by_key/${verseKey}?tafsirs=${slug}&fields=text_uthmani`,
+  );
+  return data.verse.tafsirs?.find((t) => t.slug === slug) ?? null;
+}
+
+/**
+ * Tafsir text arrives as HTML from the source. Keep only harmless structure
+ * (headings, paragraphs, emphasis, line breaks) and drop everything else —
+ * tags, attributes, scripts — before it reaches the page.
+ */
+export function sanitizeTafsirHtml(html: string): string {
+  const allowed = new Set(["p", "h2", "h3", "h4", "b", "strong", "i", "em", "br", "ul", "ol", "li", "blockquote"]);
+  return html
+    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, "")
+    .replace(/<\/?([a-zA-Z0-9]+)[^>]*>/g, (m, tag: string) => {
+      const t = tag.toLowerCase();
+      if (!allowed.has(t)) return t === "span" || t === "div" || t === "a" ? "" : " ";
+      return m.startsWith("</") ? `</${t}>` : t === "br" ? "<br>" : `<${t}>`;
+    })
+    .replace(/<h2>/g, "<h3>")
+    .replace(/<\/h2>/g, "</h3>")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
