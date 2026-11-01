@@ -13,6 +13,9 @@ import { useSettings } from "@/lib/language";
 import { getSurah, type Surah } from "@/data/surahs";
 import { RECITERS } from "@/data/reciters";
 import { TafsirPanel } from "@/components/TafsirPanel";
+import { Illustration } from "@/components/Illustration";
+import { THEME_LABEL, themeForAyah } from "@/data/themes";
+import { SURAH_VIDEOS, youtubeSearchUrl } from "@/data/videos";
 import {
   AYAH_LESSONS,
   SURAH_INTROS,
@@ -412,7 +415,14 @@ function Ayah({
         </p>
       )}
 
-      <LessonPanel lesson={lesson} verseKey={verse.verse_key} defaultOpen={kids} lang={lang} tr={tr} />
+      <LessonPanel
+        lesson={lesson}
+        verseKey={verse.verse_key}
+        translation={translation}
+        defaultOpen={kids}
+        lang={lang}
+        tr={tr}
+      />
     </li>
   );
 }
@@ -496,12 +506,14 @@ function WordCard({
 function LessonPanel({
   lesson,
   verseKey,
+  translation,
   defaultOpen,
   lang,
   tr,
 }: {
   lesson?: AyahLesson;
   verseKey: string;
+  translation: string;
   defaultOpen: boolean;
   lang: "en" | "ar";
   tr: AyahProps["tr"];
@@ -563,34 +575,86 @@ function LessonPanel({
 
         {tab === "tafsir" && <TafsirPanel verseKey={verseKey} />}
 
-        {tab === "visual" &&
-          (lesson?.media?.image || lesson?.media?.video ? (
-            <div className="grid gap-3">
-              {lesson.media.image && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={lesson.media.image.src}
-                  alt={lesson.media.image.alt[lang]}
-                  className="w-full rounded-xl"
-                />
-              )}
-              {lesson.media.video && (
-                <div className="aspect-video overflow-hidden rounded-xl">
-                  <iframe
-                    src={lesson.media.video.url}
-                    title={lesson.media.video.title[lang]}
-                    className="h-full w-full border-0"
-                    allow="accelerometer; encrypted-media; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-              )}
-            </div>
-          ) : (
-            <Empty text={tr("noVisualYet")} cta={tr("contribute")} verseKey={verseKey} />
-          ))}
+        {tab === "visual" && (
+          <VisualPanel lesson={lesson} verseKey={verseKey} translation={translation} lang={lang} tr={tr} />
+        )}
       </div>
     </details>
+  );
+}
+
+function VisualPanel({
+  lesson,
+  verseKey,
+  translation,
+  lang,
+  tr,
+}: {
+  lesson?: AyahLesson;
+  verseKey: string;
+  translation: string;
+  lang: "en" | "ar";
+  tr: AyahProps["tr"];
+}) {
+  const theme = themeForAyah(verseKey, translation);
+  const surah = Number(verseKey.split(":")[0]);
+  const curated = SURAH_VIDEOS[surah]?.[0];
+  const video = lesson?.media?.video ?? curated;
+  const [showVideo, setShowVideo] = useState(false);
+  const surahInfo = getSurah(surah)!;
+
+  return (
+    <div className="grid gap-3">
+      {lesson?.media?.image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={lesson.media.image.src} alt={lesson.media.image.alt[lang]} className="w-full rounded-xl" />
+      ) : (
+        <figure className="m-0">
+          <Illustration theme={theme} label={THEME_LABEL[theme][lang]} />
+          <figcaption className="mt-2 text-center text-sm text-ink-2">{THEME_LABEL[theme][lang]}</figcaption>
+        </figure>
+      )}
+
+      {video ? (
+        <div className="rounded-xl border border-line bg-card p-3">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm font-bold">{video.title[lang]}</span>
+            <ReviewBadge status={curated?.reviewedBy || lesson?.status === "reviewed" ? "reviewed" : "draft"} tr={tr} />
+          </div>
+          {showVideo ? (
+            <div className="aspect-video overflow-hidden rounded-xl">
+              <iframe
+                src={video.url}
+                title={video.title[lang]}
+                className="h-full w-full border-0"
+                allow="accelerometer; encrypted-media; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowVideo(true)}
+              className="w-full rounded-xl bg-teal px-4 py-3 font-extrabold text-white"
+            >
+              ▶ {tr("watchVideo")}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-line px-4 py-4 text-center">
+          <p className="m-0 mb-3 text-sm text-ink-2">{tr("noVisualYet")}</p>
+          <a
+            href={youtubeSearchUrl(surahInfo.name, lang, surahInfo.ar)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block rounded-full border border-line bg-card px-4 py-2 text-sm font-bold text-teal no-underline hover:border-gold"
+          >
+            {tr("findVideos")} ↗
+          </a>
+        </div>
+      )}
+    </div>
   );
 }
 
