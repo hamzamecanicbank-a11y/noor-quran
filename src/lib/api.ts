@@ -116,3 +116,33 @@ export function sanitizeTafsirHtml(html: string): string {
     .replace(/\s{2,}/g, " ")
     .trim();
 }
+
+export type TafsirResult = {
+  text: TafsirText;
+  /** The ayah the text was actually found on (grouped passages live on their first ayah). */
+  foundOn: string;
+  /** The source actually used, which may differ from the one asked for. */
+  slug: string;
+};
+
+/**
+ * Tafsir works often explain several ayahs together and attach the text to the
+ * first ayah of the passage; a few editions skip whole surahs. Look back a few
+ * ayahs for the requested source, then try the fallback sources in order.
+ */
+export async function fetchTafsirWithFallback(
+  verseKey: string,
+  slug: string,
+  fallbacks: string[],
+  lookBack = 8,
+): Promise<TafsirResult | null> {
+  const [s, a] = verseKey.split(":").map(Number);
+  for (const candidate of [slug, ...fallbacks.filter((f) => f !== slug)]) {
+    for (let i = 0; i <= lookBack && a - i >= 1; i++) {
+      const key = `${s}:${a - i}`;
+      const t = await fetchTafsir(key, candidate);
+      if (t?.text?.trim()) return { text: t, foundOn: key, slug: candidate };
+    }
+  }
+  return null;
+}
