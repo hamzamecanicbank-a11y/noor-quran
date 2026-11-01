@@ -300,7 +300,7 @@ function Ayah({
       </div>
 
       {/* The interlinear word row — the heart of the app */}
-      <div className="flex flex-row-reverse flex-wrap justify-start gap-x-1 gap-y-2" dir="rtl">
+      <div className="flex flex-wrap justify-start gap-x-1 gap-y-2" dir="rtl">
         {words.map((w) => {
           const active =
             selected?.key === verse.verse_key && selected.position === w.position;

@@ -45,7 +45,7 @@ export function Hero() {
 
       <div className="rounded-3xl border border-line bg-card p-5 shadow-[0_20px_60px_-30px_rgba(22,48,46,0.35)]">
         <p className="m-0 mb-2 text-center text-xs font-bold text-ink-3">{tr("tapHint")}</p>
-        <div className="flex flex-row-reverse flex-wrap justify-center gap-1" dir="rtl">
+        <div className="flex flex-wrap justify-center gap-1" dir="rtl">
           {BASMALA.map((b) => (
             <button
               key={b.p}
