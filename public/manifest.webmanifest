@@ -1,0 +1,9 @@
+{
+  "name": "Noor — Quran word by word",
+  "short_name": "Noor",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbf7ee",
+  "theme_color": "#1f6f66",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

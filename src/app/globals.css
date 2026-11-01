@@ -1,26 +1,143 @@
+@import url("https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Noto+Naskh+Arabic:wght@400;500;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap");
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #fbf7ee;
+  --paper-2: #f3ecdc;
+  --ink: #16302e;
+  --ink-2: #4a615d;
+  --ink-3: #8a9a96;
+  --teal: #1f6f66;
+  --teal-soft: #e3f0ec;
+  --gold: #c8962e;
+  --gold-soft: #f7e9c6;
+  --line: #e6dcc4;
+  --card: #ffffff;
+  --glow: rgba(200, 150, 46, 0.45);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark) {
+    --paper: #0f1c1b;
+    --paper-2: #142624;
+    --ink: #f1ede2;
+    --ink-2: #b9c4c0;
+    --ink-3: #74837f;
+    --teal: #5fbfae;
+    --teal-soft: #173431;
+    --gold: #e0b35a;
+    --gold-soft: #3a2f16;
+    --line: #22413d;
+    --card: #15292a;
+    --glow: rgba(224, 179, 90, 0.4);
   }
 }
 
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-line: var(--line);
+  --color-card: var(--card);
+  --font-sans: "Nunito", "Noto Naskh Arabic", system-ui, sans-serif;
+  --font-quran: "Amiri Quran", "Amiri", "Scheherazade New", serif;
+  --font-arabic-ui: "Noto Naskh Arabic", "Amiri", serif;
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+}
+
+html[dir="rtl"] body {
+  font-family: var(--font-arabic-ui);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  min-height: 100dvh;
+  line-height: 1.55;
+}
+
+.quran {
+  font-family: var(--font-quran);
+  direction: rtl;
+  unicode-bidi: isolate;
+  line-height: 2.1;
+  letter-spacing: 0;
+  font-feature-settings: "liga", "calt";
+}
+
+.word-tile {
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+.word-tile:hover,
+.word-tile:focus-visible {
+  background: var(--gold-soft);
+}
+.word-tile[data-active="true"] {
+  background: var(--gold-soft);
+  box-shadow: 0 0 0 3px var(--glow);
+}
+
+.ayah[data-playing="true"] {
+  box-shadow: inset 4px 0 0 var(--gold);
+}
+html[dir="ltr"] .ayah[data-playing="true"] {
+  box-shadow: inset 4px 0 0 var(--gold);
+}
+
+:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+.medallion {
+  background: radial-gradient(circle at 35% 30%, #f3d791, var(--gold) 70%);
+  color: #2b1f06;
+  clip-path: polygon(
+    50% 0%,
+    61% 9%,
+    75% 7%,
+    82% 18%,
+    93% 25%,
+    93% 39%,
+    100% 50%,
+    93% 61%,
+    93% 75%,
+    82% 82%,
+    75% 93%,
+    61% 91%,
+    50% 100%,
+    39% 91%,
+    25% 93%,
+    18% 82%,
+    7% 75%,
+    7% 61%,
+    0% 50%,
+    7% 39%,
+    7% 25%,
+    18% 18%,
+    25% 7%,
+    39% 9%
+  );
 }
