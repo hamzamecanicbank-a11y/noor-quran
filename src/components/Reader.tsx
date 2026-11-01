@@ -42,6 +42,20 @@ export function Reader({ surahNumber }: { surahNumber: number }) {
   const candidatesRef = useRef<string[]>([]);
 
   const [attempt, setAttempt] = useState(0);
+  const [art, setArt] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/art/list?surah=${surahNumber}`)
+      .then((r) => (r.ok ? (r.json() as Promise<{ art: Record<string, string> }>) : { art: {} }))
+      .then((j) => {
+        if (!cancelled) setArt(j.art ?? {});
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [surahNumber]);
 
   useEffect(() => {
     let cancelled = false;
@@ -201,6 +215,7 @@ export function Reader({ surahNumber }: { surahNumber: number }) {
             lang={lang}
             kids={kids}
             tr={tr}
+            artUrl={art[v.verse_key]}
           />
         ))}
       </ol>
@@ -314,6 +329,7 @@ type AyahProps = {
   lang: "en" | "ar";
   kids: boolean;
   tr: (k: Parameters<ReturnType<typeof useSettings>["tr"]>[0]) => string;
+  artUrl?: string;
 };
 
 function Ayah({
@@ -326,6 +342,7 @@ function Ayah({
   lang,
   kids,
   tr,
+  artUrl,
 }: AyahProps) {
   const words = useMemo(
     () => (verse.words ?? []).filter((w) => w.char_type_name === "word"),
@@ -422,6 +439,7 @@ function Ayah({
         defaultOpen={kids}
         lang={lang}
         tr={tr}
+        artUrl={artUrl}
       />
     </li>
   );
@@ -510,6 +528,7 @@ function LessonPanel({
   defaultOpen,
   lang,
   tr,
+  artUrl,
 }: {
   lesson?: AyahLesson;
   verseKey: string;
@@ -517,6 +536,7 @@ function LessonPanel({
   defaultOpen: boolean;
   lang: "en" | "ar";
   tr: AyahProps["tr"];
+  artUrl?: string;
 }) {
   const [tab, setTab] = useState<"lesson" | "story" | "tafsir" | "visual">("lesson");
   const tabs: { id: typeof tab; label: string; show: boolean }[] = [
@@ -576,7 +596,7 @@ function LessonPanel({
         {tab === "tafsir" && <TafsirPanel verseKey={verseKey} />}
 
         {tab === "visual" && (
-          <VisualPanel lesson={lesson} verseKey={verseKey} translation={translation} lang={lang} tr={tr} />
+          <VisualPanel lesson={lesson} verseKey={verseKey} translation={translation} lang={lang} tr={tr} artUrl={artUrl} />
         )}
       </div>
     </details>
@@ -589,12 +609,14 @@ function VisualPanel({
   translation,
   lang,
   tr,
+  artUrl,
 }: {
   lesson?: AyahLesson;
   verseKey: string;
   translation: string;
   lang: "en" | "ar";
   tr: AyahProps["tr"];
+  artUrl?: string;
 }) {
   const theme = themeForAyah(verseKey, translation);
   const surah = Number(verseKey.split(":")[0]);
@@ -605,9 +627,18 @@ function VisualPanel({
 
   return (
     <div className="grid gap-3">
-      {lesson?.media?.image ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={lesson.media.image.src} alt={lesson.media.image.alt[lang]} className="w-full rounded-xl" />
+      {lesson?.media?.image || artUrl ? (
+        <figure className="m-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lesson?.media?.image?.src ?? artUrl}
+            alt={lesson?.media?.image?.alt[lang] ?? THEME_LABEL[theme][lang]}
+            className="mx-auto w-full max-w-md rounded-xl"
+          />
+          <figcaption className="mt-2 text-center text-sm text-ink-2">
+            {lesson?.media?.image ? lesson.media.image.alt[lang] : `${THEME_LABEL[theme][lang]} · ${tr("reviewed")}`}
+          </figcaption>
+        </figure>
       ) : (
         <figure className="m-0">
           <Illustration theme={theme} label={THEME_LABEL[theme][lang]} />

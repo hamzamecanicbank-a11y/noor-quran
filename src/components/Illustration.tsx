@@ -6,7 +6,6 @@ import type { Theme } from "@/data/themes";
 
 const T = "var(--teal)";
 const G = "var(--gold)";
-const S = "var(--teal-soft)";
 const GS = "var(--gold-soft)";
 const P = "var(--paper-2)";
 const I = "var(--ink-3)";

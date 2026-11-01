@@ -34,3 +34,20 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Art Studio (Gemini image generation)
+
+`/studio` lets a trusted person generate a sketch or cartoon for each ayah with Gemini,
+review it, and approve it for children. Approved pictures are stored in Vercel Blob and
+replace the themed placeholder illustrations in the reader.
+
+Set these in Vercel → Project → Settings → Environment Variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `GEMINI_API_KEY` | From Google AI Studio. Used server-side only. |
+| `STUDIO_PASSWORD` | Any long passphrase. Required to generate/approve/remove. |
+| `BLOB_READ_WRITE_TOKEN` | Created automatically when you add a **Blob** store to the project (Storage tab → Create → Blob → connect to `noor-quran`). |
+| `GEMINI_IMAGE_MODEL` | Optional. Defaults to `gemini-2.5-flash-image`. |
+
+Every prompt forbids people, faces, prophets, angels, text and frightening scenes.
